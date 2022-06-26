@@ -2,6 +2,7 @@
 
   <header>
     <h3>Challenge Drawflow AST</h3>
+    <button @click="exportEditor">Export</button>
   </header>
   <div class="container">
     <div class="col left">Col 1</div>
@@ -15,6 +16,7 @@
 <script>
 
 import Drawflow from 'drawflow'
+import BaseNode from './BaseNode.vue'
 import styleDrawflow from 'drawflow/dist/drawflow.min.css'
 import style from '../assets/style.css'
 import { h, getCurrentInstance, render } from 'vue'
@@ -26,33 +28,39 @@ export default {
       editor: null
     }
   },
+  components: {
+    BaseNode
+  },
   props: {
     msg: String
+  },
+  methods: {
+    exportEditor() {
+      console.log(this.editor.export())
+    }
   },
   mounted() {
     const id = document.getElementById("drawflow");
     const internalInstance = getCurrentInstance()
     this.editor = new Drawflow(id, Vue, internalInstance.appContext.app._context);
     this.editor.start()
+    internalInstance.appContext.app._context.config.globalProperties.$df = this.editor;
 
-    var html = `
-<div><p>Prueba</p><p>Prueba</p><p>Prueba</p><p>Prueba</p><p>Prueba</p><p>Prueba</p><p>Prueba</p><p>Prueba</p><p>Prueba</p><p>Prueba</p><p>Prueba</p><p>Prueba</p></div>
-<style>p{
-  height: 20px;
-  margin-top: 19px;
-    margin-bottom: 14px;
-    margin-left:-10px;
-    padding:0px;
-    
-}</style>
-`;
-    var data = { "name": '' };
+    var data = {
+      url: 'hola',
+      inputTypes: ['CodeBlock'],
+      outputTypes: ['CodeBlock']
+    };
 
-    this.editor.addNode('github', 0, 1, 150, 300, 'github', data, html);
-    this.editor.addNode('github', 1, 0, 800, 300, 'github', data, html);
+    this.editor.registerNode('test', BaseNode, { name: 'CodeBlock' }, {})
+    this.editor.addNode('test', 1, 1, 150, 300, 'test', data, 'test', 'vue')
+    this.editor.addNode('test', 1, 1, 800, 300, 'test', data, 'test', 'vue')
+
     this.editor.on('connectionCreated', connection => {
-      console.log(this.editor.getNodeFromId(connection.input_id));
       this.editor.addNodeInput(connection.input_id)
+      let newData = this.editor.getNodeFromId(connection.input_id).data
+      newData.inputTypes.push('CodeBlock')
+      this.editor.updateNodeDataFromId(connection.input_id, newData)
     })
   }
 }
